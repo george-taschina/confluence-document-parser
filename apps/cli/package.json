@@ -1,0 +1,39 @@
+{
+  "name": "@straion/cli",
+  "version": "1.0.0",
+  "description": "CLI tool for importing documents into Straion",
+  "main": "dist/index.js",
+  "bin": {
+    "straion": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist | rm tsconfig.tsbuildinfo",
+    "generate-types": "npx openapicmd typegen ./confluence-api.json > src/types/confluence-api.d.ts",
+    "prebuild": "pnpm generate-types"
+  },
+  "keywords": [
+    "straion",
+    "cli",
+    "document-import"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@straion/shared": "workspace:*",
+    "axios": "^1.6.2",
+    "chalk": "^4.1.2",
+    "commander": "^11.1.0",
+    "inquirer": "^9.2.12",
+    "openapi-client-axios": "^7.8.0",
+    "openapicmd": "^2.7.0",
+    "ora": "^5.4.1"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^20.10.0",
+    "openapi-typescript": "^7.10.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

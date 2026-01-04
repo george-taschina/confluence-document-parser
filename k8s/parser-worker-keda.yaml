@@ -1,0 +1,28 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: straion-parser-worker-scaler
+spec:
+  scaleTargetRef:
+    name: straion-parser-worker
+  minReplicaCount: 2
+  maxReplicaCount: 20
+  pollingInterval: 30
+  cooldownPeriod: 300
+  triggers:
+  # Scale based on consumer lag for document.fetched topic
+  - type: kafka
+    metadata:
+      bootstrapServers: kafka:9092
+      consumerGroup: parser-workers
+      topic: document.fetched
+      lagThreshold: "10"
+      offsetResetPolicy: latest
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keda-kafka-config
+data:
+  # Additional Kafka scaler configuration if needed
+  bootstrapServers: kafka:9092

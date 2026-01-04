@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: straion-parser-worker
+  labels:
+    app: straion-parser-worker
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: straion-parser-worker
+  template:
+    metadata:
+      labels:
+        app: straion-parser-worker
+        version: v1
+    spec:
+      containers:
+      - name: parser-worker
+        image: straion-parser-worker:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: import-config
+              key: NODE_ENV
+        - name: KAFKA_BROKER
+          value: "kafka:9092"
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: api-secrets
+              key: anthropic-key
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        # Parser worker doesn't have HTTP endpoints, so no probes
+        # It will restart if it crashes
+      restartPolicy: Always

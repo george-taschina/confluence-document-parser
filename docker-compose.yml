@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: straion-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - straion-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: straion-kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_LOG_RETENTION_HOURS: 168
+    ports:
+      - "9092:9092"
+    networks:
+      - straion-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "kafka:9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: straion-kafka-ui
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: straion-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    ports:
+      - "8080:8080"
+    networks:
+      - straion-network
+
+  # Import Service (API Gateway)
+  import-service:
+    build:
+      context: .
+      dockerfile: apps/import-service/Dockerfile.dev
+    container_name: straion-import-service
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=development
+      - KAFKA_BROKER=kafka:9092
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    networks:
+      - straion-network
+    volumes:
+      - ./apps/import-service/src:/app/apps/import-service/src
+      - ./apps/import-service/tsconfig.json:/app/apps/import-service/tsconfig.json
+
+  # Parser Worker (Document Parsing)
+  parser-worker:
+    build:
+      context: .
+      dockerfile: apps/parser-worker/Dockerfile.dev
+    container_name: straion-parser-worker
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=development
+      - KAFKA_BROKER=kafka:9092
+      - ANTHROPIC_API_KEY=${ANTROPIC_API_KEY}
+    networks:
+      - straion-network
+    volumes:
+      - ./apps/parser-worker/src:/app/apps/parser-worker/src
+      - ./apps/parser-worker/tsconfig.json:/app/apps/parser-worker/tsconfig.json
+
+networks:
+  straion-network:
+    driver: bridge

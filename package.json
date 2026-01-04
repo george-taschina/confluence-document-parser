@@ -1,0 +1,36 @@
+{
+  "name": "straion-monorepo",
+  "version": "1.0.0",
+  "description": "Straion Document Import Tool - Monorepo",
+  "private": true,
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "clean": "pnpm -r clean && rm -rf node_modules",
+    "cli": "pnpm --filter @straion/cli",
+    "service": "pnpm --filter @straion/import-service"
+  },
+  "keywords": [
+    "straion",
+    "document-import",
+    "adr",
+    "confluence",
+    "google-docs"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.19.3",
+    "@typescript-eslint/eslint-plugin": "8.51.0",
+    "@typescript-eslint/parser": "8.51.0",
+    "eslint": "9.39.2",
+    "prettier": "3.7.4",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

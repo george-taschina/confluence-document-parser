@@ -1,0 +1,19 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy workspace files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages ./packages
+COPY apps/parser-worker ./apps/parser-worker
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Install all dependencies (including dev dependencies)
+RUN pnpm install
+
+WORKDIR /app/apps/parser-worker
+
+# Use start:dev for hot reload
+CMD ["pnpm", "run", "start:dev"]

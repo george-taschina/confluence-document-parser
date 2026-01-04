@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: straion-import-service
+  labels:
+    app: straion-import-service
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: straion-import-service
+  template:
+    metadata:
+      labels:
+        app: straion-import-service
+        version: v1
+    spec:
+      containers:
+      - name: import-service
+        image: straion-import-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: import-config
+              key: NODE_ENV
+        - name: PORT
+          value: "3000"
+        - name: KAFKA_BROKER
+          value: "kafka:9092"
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: api-secrets
+              key: anthropic-key
+        - name: GCS_BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: import-config
+              key: GCS_BUCKET_NAME
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      restartPolicy: Always
