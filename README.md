@@ -1,4 +1,4 @@
-# Straion Document Import System
+# Straion Demo Document Import System
 
 A monorepo containing a complete document import system for importing and parsing documents from Confluence into structured ADR (Architecture Decision Record) format using AI.
 
