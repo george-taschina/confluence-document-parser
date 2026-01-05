@@ -81,6 +81,9 @@
         "@swc/jest"
       ]
     },
+    "moduleNameMapper": {
+      "^uuid$": "<rootDir>/__mocks__/uuid.ts"
+    },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],

@@ -7,6 +7,8 @@
     "build": "pnpm -r build",
     "dev": "pnpm -r --parallel dev",
     "test": "pnpm -r test",
+    "test:e2e": "pnpm -r test:e2e",
+    "test:integration": "pnpm exec jest --config test/jest-integration.json",
     "lint": "pnpm -r lint",
     "clean": "pnpm -r clean && rm -rf node_modules",
     "cli": "pnpm --filter @straion/cli",
@@ -22,10 +24,14 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@swc/core": "^1.15.8",
+    "@swc/jest": "^0.2.39",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.19.3",
     "@typescript-eslint/eslint-plugin": "8.51.0",
     "@typescript-eslint/parser": "8.51.0",
     "eslint": "9.39.2",
+    "jest": "^29.7.0",
     "prettier": "3.7.4",
     "typescript": "5.9.3"
   },

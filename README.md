@@ -1,5 +1,7 @@
 # Straion Demo Document Import System
 
+[![Test Suite](https://github.com/YOUR_USERNAME/straion/actions/workflows/test.yml/badge.svg)](https://github.com/YOUR_USERNAME/straion/actions/workflows/test.yml)
+
 A monorepo containing a complete document import system for importing and parsing documents from Confluence into structured ADR (Architecture Decision Record) format using AI.
 
 ## Architecture

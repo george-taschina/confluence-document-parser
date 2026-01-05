@@ -1,4 +1,5 @@
-import { IsString, IsObject, IsEnum } from 'class-validator';
+import { IsString, IsObject, IsEnum, ValidateNested, IsDefined } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export enum SourcePlatform {
   CONFLUENCE = 'confluence',
@@ -23,7 +24,9 @@ export class ImportDocumentDto {
   @IsEnum(SourcePlatform)
   source!: SourcePlatform;
 
-  @IsObject()
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => PageData)
   page!: PageData;
 }
 

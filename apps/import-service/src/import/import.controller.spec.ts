@@ -1,13 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ImportController } from './import.controller';
 import { ImportUseCase } from './import.usecase';
-import { ClientKafka } from '@nestjs/microservices';
-import { ImportDocumentDto, ImportResponseDto, ImportStatusDto } from '../dto/import.dto';
+import {
+  ImportDocumentDto,
+  ImportResponseDto,
+  ImportStatusDto,
+  SourcePlatform,
+} from '../dto/import.dto';
 
 describe('ImportController', () => {
   let controller: ImportController;
-  let importUseCase: ImportUseCase;
-  let kafkaClient: ClientKafka;
 
   const mockImportUseCase = {
     startImport: jest.fn(),
@@ -36,8 +38,6 @@ describe('ImportController', () => {
     }).compile();
 
     controller = module.get<ImportController>(ImportController);
-    importUseCase = module.get<ImportUseCase>(ImportUseCase);
-    kafkaClient = module.get<ClientKafka>('KAFKA_SERVICE');
   });
 
   afterEach(() => {
@@ -66,7 +66,7 @@ describe('ImportController', () => {
 
   describe('importDocument', () => {
     const validImportDto: ImportDocumentDto = {
-      source: 'confluence',
+      source: SourcePlatform.CONFLUENCE,
       page: {
         id: 'page-123',
         title: 'Test Page',
@@ -87,7 +87,9 @@ describe('ImportController', () => {
 
       const result = await controller.importDocument(validImportDto);
 
-      expect(mockImportUseCase.startImport).toHaveBeenCalledWith(validImportDto);
+      expect(mockImportUseCase.startImport).toHaveBeenCalledWith(
+        validImportDto,
+      );
       expect(result).toEqual(expectedResponse);
     });
 
@@ -195,7 +197,9 @@ describe('ImportController', () => {
         throw error;
       });
 
-      expect(() => controller.getStatus(importId)).toThrow('Import ID not found');
+      expect(() => controller.getStatus(importId)).toThrow(
+        'Import ID not found',
+      );
     });
   });
 });
