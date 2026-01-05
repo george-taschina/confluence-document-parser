@@ -8,8 +8,8 @@ import {
 import { KafkaUseCase } from './kafka.usecase';
 
 @Controller()
-export class KafkaConsumerService {
-  private readonly logger = new Logger(KafkaConsumerService.name);
+export class KafkaConsumerController {
+  private readonly logger = new Logger(KafkaConsumerController.name);
 
   constructor(private readonly kafkaUseCase: KafkaUseCase) {}
 

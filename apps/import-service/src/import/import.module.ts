@@ -4,12 +4,12 @@ import { ImportController } from './import.controller';
 import { ImportStatusService } from './import-status.service';
 import { ImportUseCase } from './import.usecase';
 import { KafkaModule } from '../kafka/kafka.module';
-import { KafkaConsumerService } from '../kafka/kafka-consumer.service';
+import { KafkaConsumerController } from '../kafka/kafka-consumer.controller';
 import { KafkaUseCase } from '../kafka/kafka.usecase';
 
 @Module({
   imports: [HttpModule, KafkaModule],
-  controllers: [ImportController, KafkaConsumerService],
+  controllers: [ImportController, KafkaConsumerController],
   providers: [ImportStatusService, ImportUseCase, KafkaUseCase],
 })
 export class ImportModule {}

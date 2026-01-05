@@ -23,75 +23,74 @@ export class ImportUseCase {
     const importId = uuidv4();
     this.logger.log(`Starting import: ${importId} from ${importDto.source}`);
 
-    try {
+    // Initialize status
+    this.importStatusService.set(importId, {
+      importId,
+      status: 'processing',
+    });
+
+    // Attempt to publish to Kafka
+    const publishedSuccessfully = await this.publishToKafka(
+      importId,
+      importDto,
+    );
+
+    // Fallback: if Kafka fails, set as completed directly
+    if (!publishedSuccessfully) {
       this.importStatusService.set(importId, {
         importId,
-        status: 'processing',
+        status: 'completed',
+        parsedContent: {
+          id: importDto.page.id,
+          title: importDto.page.title,
+          content: importDto.page.content,
+          spaceKey: importDto.page.spaceKey,
+        },
       });
+    }
 
-      const { page } = importDto;
+    return {
+      success: true,
+      importId,
+      status: 'processing',
+      message:
+        'Document queued for processing. Use /import/status/:id to check progress',
+    };
+  }
 
-      try {
-        await lastValueFrom(
-          this.kafkaClient
-            .emit('document.fetched', {
-              key: importId,
-              value: JSON.stringify({
-                importId,
-                source: importDto.source,
-                documentId: page.id,
-                content: page.content,
-                title: page.title,
-                spaceKey: page.spaceKey,
-                timestamp: new Date().toISOString(),
-              }),
-            })
-            .pipe(timeout(5000)),
-        );
-        this.logger.log(`Document queued for processing: ${importId}`);
-      } catch (kafkaError) {
-        const errorMessage =
-          kafkaError instanceof Error ? kafkaError.message : 'Unknown error';
-        this.logger.warn(
-          `Kafka emit failed: ${errorMessage}, falling back to direct processing`,
-        );
-        // Fallback: set as completed directly
-        this.importStatusService.set(importId, {
-          importId,
-          status: 'completed',
-          parsedContent: {
-            id: page.id,
-            title: page.title,
-            content: page.content,
-            spaceKey: page.spaceKey,
-          },
-        });
-      }
+  private async publishToKafka(
+    importId: string,
+    importDto: ImportDocumentDto,
+  ): Promise<boolean> {
+    const { page } = importDto;
 
-      return {
-        success: true,
-        importId,
-        status: 'processing',
-        message:
-          'Document queued for processing. Use /import/status/:id to check progress',
-      };
+    try {
+      await lastValueFrom(
+        this.kafkaClient
+          .emit('document.fetched', {
+            key: importId,
+            value: JSON.stringify({
+              importId,
+              source: importDto.source,
+              documentId: page.id,
+              content: page.content,
+              title: page.title,
+              spaceKey: page.spaceKey,
+              timestamp: new Date().toISOString(),
+            }),
+          })
+          .pipe(timeout(5000)),
+      );
+
+      this.logger.log(`Document queued for processing: ${importId}`);
+      return true;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Import failed: ${errorMessage}`);
-
-      this.importStatusService.set(importId, {
-        importId,
-        status: 'failed',
-        error: errorMessage,
-      });
-
-      return {
-        success: false,
-        importId,
-        status: 'failed',
-        message: errorMessage,
-      };
+      this.logger.warn(
+        `Kafka publish failed for ${importId}: ${errorMessage}. Falling back to direct processing.`,
+      );
+      return false;
     }
   }
 
