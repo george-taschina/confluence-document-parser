@@ -1,0 +1,215 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run unit tests
+        run: pnpm test
+
+      - name: Upload unit test coverage
+        if: matrix.node-version == '22.x'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-coverage
+          path: |
+            apps/*/coverage
+            packages/*/coverage
+          retention-days: 7
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
+        service: [import-service, parser-worker]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build ${{ matrix.service }}
+        run: pnpm --filter @straion/${{ matrix.service }} build
+
+      - name: Run ${{ matrix.service }} E2E tests
+        run: pnpm --filter @straion/${{ matrix.service }} test:e2e
+
+      - name: Upload E2E test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results-${{ matrix.service }}-node-${{ matrix.node-version }}
+          path: apps/${{ matrix.service }}/test-results
+          retention-days: 7
+          if-no-files-found: ignore
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all services
+        run: pnpm build
+
+      - name: Run integration tests
+        run: pnpm test:integration
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results-node-${{ matrix.node-version }}
+          path: test-results
+          retention-days: 7
+          if-no-files-found: ignore
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linter
+        run: pnpm lint
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            apps/*/dist
+            packages/*/dist
+          retention-days: 7
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [unit-tests, e2e-tests, integration-tests, lint, build]
+    if: always()
+
+    steps:
+      - name: Check test results
+        run: |
+          echo "Unit Tests: ${{ needs.unit-tests.result }}"
+          echo "E2E Tests: ${{ needs.e2e-tests.result }}"
+          echo "Integration Tests: ${{ needs.integration-tests.result }}"
+          echo "Lint: ${{ needs.lint.result }}"
+          echo "Build: ${{ needs.build.result }}"
+
+          if [ "${{ needs.unit-tests.result }}" != "success" ] || \
+             [ "${{ needs.e2e-tests.result }}" != "success" ] || \
+             [ "${{ needs.integration-tests.result }}" != "success" ] || \
+             [ "${{ needs.lint.result }}" != "success" ] || \
+             [ "${{ needs.build.result }}" != "success" ]; then
+            echo "❌ Some checks failed"
+            exit 1
+          fi
+
+          echo "✅ All checks passed!"

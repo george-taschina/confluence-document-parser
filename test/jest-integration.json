@@ -1,0 +1,13 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "../",
+  "testEnvironment": "node",
+  "testRegex": "test/integration/.*\\.integration\\.spec\\.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": ["@swc/jest"]
+  },
+  "moduleNameMapper": {
+    "^uuid$": "<rootDir>/apps/import-service/src/__mocks__/uuid.ts"
+  },
+  "testTimeout": 30000
+}
