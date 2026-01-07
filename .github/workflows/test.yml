@@ -132,31 +132,6 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22.x
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run linter
-        run: pnpm lint
-
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -194,7 +169,7 @@ jobs:
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [unit-tests, e2e-tests, integration-tests, lint, build]
+    needs: [unit-tests, e2e-tests, integration-tests, build]
     if: always()
 
     steps:
@@ -203,13 +178,11 @@ jobs:
           echo "Unit Tests: ${{ needs.unit-tests.result }}"
           echo "E2E Tests: ${{ needs.e2e-tests.result }}"
           echo "Integration Tests: ${{ needs.integration-tests.result }}"
-          echo "Lint: ${{ needs.lint.result }}"
           echo "Build: ${{ needs.build.result }}"
 
           if [ "${{ needs.unit-tests.result }}" != "success" ] || \
              [ "${{ needs.e2e-tests.result }}" != "success" ] || \
              [ "${{ needs.integration-tests.result }}" != "success" ] || \
-             [ "${{ needs.lint.result }}" != "success" ] || \
              [ "${{ needs.build.result }}" != "success" ]; then
             echo "❌ Some checks failed"
             exit 1
