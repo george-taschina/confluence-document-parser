@@ -92,6 +92,9 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
 
+    env:
+      NODE_ENV: CI
+
     strategy:
       matrix:
         node-version: [20.x, 22.x]
