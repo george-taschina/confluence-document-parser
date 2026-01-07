@@ -47,7 +47,20 @@ export async function listCommand(options: ListOptions) {
     }
   } catch (error: any) {
     spinner.fail(chalk.red('Failed to fetch documents'));
-    console.error(chalk.red('Error:'), JSON.stringify(error));
+
+    if (error.response) {
+      console.error(chalk.red('Error:'), `${error.response.status} - ${error.response.statusText}`);
+      if (error.response.data) {
+        console.error(chalk.red('Details:'), JSON.stringify(error.response.data, null, 2));
+      }
+    } else if (error.message) {
+      console.error(chalk.red('Error:'), error.message);
+      if (error.originalError) {
+        console.error(chalk.red('Original Error:'), error.originalError);
+      }
+    } else {
+      console.error(chalk.red('Error:'), JSON.stringify(error));
+    }
     process.exit(1);
   }
 }

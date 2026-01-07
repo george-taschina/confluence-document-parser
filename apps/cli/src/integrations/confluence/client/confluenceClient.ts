@@ -38,11 +38,19 @@ export class ConfluenceClient {
         }
     }
 
-    async getSpace(spaceId: string): Promise<ConfluenceSpace> {
+    async getSpace(spaceKey: string): Promise<ConfluenceSpace> {
         try {
-            const response = await this.client.get(`${this.config.baseUrl}/wiki/rest/api/space/${spaceId}`)
+            const response = await this.client.getSpaces();
 
-            return mapSpace(response.data);
+            if (response.data.results) {
+                for (const space of response.data.results) {
+                    if (space.key === spaceKey) {
+                        return mapSpace(space);
+                    }
+                }
+            }
+
+            throw new Error(`Space with key/id "${spaceKey}" not found`);
         } catch (error) {
             throw toConfluenceError(error);
         }

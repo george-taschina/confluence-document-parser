@@ -6,6 +6,7 @@ import { authCommand } from './commands/auth';
 import { listCommand } from './commands/list';
 import { statusCommand } from './commands/status';
 import { spaceCommand } from './commands/space';
+import { spacesCommand } from './commands/spaces';
 
 const program = new Command();
 
@@ -44,5 +45,10 @@ program
   .description('Get Confluence space information by key')
   .option('--key <spaceId>', 'Confluence space key')
   .action(spaceCommand);
+
+program
+  .command('spaces')
+  .description('List all available Confluence spaces')
+  .action(spacesCommand);
 
 program.parse();
