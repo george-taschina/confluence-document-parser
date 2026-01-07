@@ -10,7 +10,7 @@ import { HealthModule } from './health/health.module';
       envFilePath: '.env',
     }),
     ImportModule,
-    HealthModule,
+    ...(process.env.NODE_ENV !== 'CI' ? [HealthModule] : []),
   ],
 })
 export class AppModule {}
