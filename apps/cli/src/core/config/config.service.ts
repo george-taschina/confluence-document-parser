@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -14,7 +15,8 @@ export interface Config {
   };
 }
 
-export class ConfigManager {
+@Injectable()
+export class ConfigService {
   private readonly configPath: string;
   private readonly configDir: string;
 
